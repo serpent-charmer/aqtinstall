@@ -592,13 +592,19 @@ class MetadataFactory:
     def iterate_folders(html_doc: str, filter_category: str = "") -> Generator[str, None, None]:
         def table_row_to_folder(tr: bs4.element.Tag) -> str:
             try:
-                return tr.find_all("td")[1].a.contents[0].rstrip("/")
-            except (AttributeError, IndexError):
-                return ""
+                if tr["href"] == tr.contents[0]:
+                    return tr["href"].rstrip("/")
+            except (AttributeError, IndexError) as e:
+                print(e)
 
         soup: bs4.BeautifulSoup = bs4.BeautifulSoup(html_doc, "html.parser")
-        for row in soup.body.table.find_all("tr"):
+        my_tbl = soup.body.find("table")
+        if not my_tbl:
+            my_tbl = soup.body.pre
+        table = my_tbl.find_all("a")
+        for row in table:
             content: str = table_row_to_folder(row)
+
             if not content or content == "Parent Directory":
                 continue
             if content.startswith(filter_category):
